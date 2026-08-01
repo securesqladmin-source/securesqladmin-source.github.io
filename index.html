@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SecureSQL - Проверка БД</title>
+    <title>SecureSQL - Создание агента</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -15,45 +15,117 @@
             color: var(--tg-theme-text-color, #000);
         }
         
-        h2 { margin-bottom: 20px; font-size: 20px; }
+        h2 { 
+            margin-bottom: 8px; 
+            font-size: 18px; 
+            color: var(--tg-theme-text-color, #000);
+        }
         
-        .form-group { margin-bottom: 15px; }
+        .section {
+            margin-bottom: 25px;
+            padding: 15px;
+            border-radius: 12px;
+            background: var(--tg-theme-secondary-bg-color, #f5f5f5);
+        }
+        
+        .section-title {
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 15px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        .form-group { margin-bottom: 12px; }
         
         label {
             display: block;
-            margin-bottom: 5px;
+            margin-bottom: 4px;
             font-weight: 500;
-            font-size: 14px;
+            font-size: 13px;
             color: var(--tg-theme-hint-color, #666);
         }
         
         input, select {
             width: 100%;
-            padding: 12px;
+            padding: 10px;
             border: 1px solid #ddd;
-            border-radius: 10px;
-            font-size: 16px;
-            background: var(--tg-theme-secondary-bg-color, #f0f0f0);
+            border-radius: 8px;
+            font-size: 15px;
+            background: var(--tg-theme-bg-color, #fff);
             color: var(--tg-theme-text-color, #000);
         }
         
-        button {
+        .row {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .row > * { flex: 1; }
+        
+        .endpoint-card {
+            background: var(--tg-theme-bg-color, #fff);
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            border: 1px solid #ddd;
+        }
+        
+        .endpoint-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .endpoint-number {
+            font-weight: bold;
+            font-size: 14px;
+        }
+        
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        
+        .btn-add {
             width: 100%;
-            padding: 14px;
+            padding: 12px;
             background: var(--tg-theme-button-color, #2481cc);
             color: var(--tg-theme-button-text-color, #fff);
+            margin-top: 5px;
+            font-size: 14px;
+        }
+        
+        .btn-remove {
+            background: #ff4444;
+            color: white;
+            padding: 4px 10px;
+            font-size: 12px;
+        }
+        
+        .btn-submit {
+            width: 100%;
+            padding: 14px;
+            background: #28a745;
+            color: white;
             border: none;
             border-radius: 10px;
             font-size: 16px;
             font-weight: bold;
             cursor: pointer;
-            margin-top: 10px;
+            margin-top: 15px;
         }
         
-        button:active { opacity: 0.8; }
+        .btn:active { opacity: 0.8; }
+        .btn-submit:active { opacity: 0.8; }
         
         .note {
-            margin-top: 15px;
+            margin-top: 10px;
             font-size: 12px;
             color: var(--tg-theme-hint-color, #999);
             text-align: center;
@@ -61,85 +133,234 @@
     </style>
 </head>
 <body>
-    <h2>🔍 Проверка базы данных</h2>
+    <h2>🔧 Создание агента SecureSQL</h2>
     
-    <form id="dbForm">
-        <div class="form-group">
-            <label>Тип базы данных</label>
-            <select id="dbType" required>
-                <option value="">Выберите тип...</option>
-                <option value="mysql">MySQL</option>
-                <option value="postgresql">PostgreSQL</option>
-                <option value="mssql">MS SQL Server</option>
-                <option value="oracle">Oracle</option>
-            </select>
-        </div>
+    <!-- Секция подключения к БД -->
+    <div class="section">
+        <div class="section-title">📡 Подключение к базе данных</div>
         
         <div class="form-group">
-            <label>Хост / IP-адрес</label>
+            <label>Хост</label>
             <input type="text" id="host" placeholder="192.168.1.100" required>
         </div>
         
-        <div class="form-group">
-            <label>Порт</label>
-            <input type="number" id="port" placeholder="3306" value="3306">
+        <div class="row">
+            <div class="form-group">
+                <label>Порт SSH</label>
+                <input type="number" id="sshPort" placeholder="22" value="22">
+            </div>
+            <div class="form-group">
+                <label>Тип БД</label>
+                <select id="dbType">
+                    <option value="mysql">MySQL</option>
+                    <option value="postgresql">PostgreSQL</option>
+                </select>
+            </div>
         </div>
         
         <div class="form-group">
-            <label>Название БД</label>
+            <label>Название базы данных</label>
             <input type="text" id="dbName" placeholder="my_database" required>
         </div>
         
-        <div class="form-group">
-            <label>Тип проверки</label>
-            <select id="checkType">
-                <option value="full">Полная проверка</option>
-                <option value="access">Права доступа</option>
-                <option value="encryption">Шифрование</option>
-                <option value="vulnerabilities">Уязвимости</option>
-            </select>
+        <div class="row">
+            <div class="form-group">
+                <label>Имя пользователя SSH</label>
+                <input type="text" id="sshUser" placeholder="root" required>
+            </div>
+            <div class="form-group">
+                <label>Пароль SSH</label>
+                <input type="password" id="sshPassword" placeholder="••••••••" required>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Секция настройки эндпойнтов -->
+    <div class="section">
+        <div class="section-title">🔗 Настройка эндпойнтов</div>
+        
+        <div id="endpoints-container">
+            <!-- Эндпойнты будут добавляться здесь -->
         </div>
         
-        <button type="submit">🚀 Запустить проверку</button>
-    </form>
+        <button type="button" class="btn btn-add" onclick="addEndpoint()">
+            ➕ Добавить эндпойнт
+        </button>
+    </div>
+    
+    <button type="button" class="btn-submit" onclick="submitForm()">
+        🚀 Создать агента
+    </button>
     
     <p class="note">Данные будут отправлены боту SecureSQL</p>
 
     <script>
         const tg = window.Telegram.WebApp;
-        
-        // Инициализация
         tg.ready();
         tg.expand();
         
-        // Настраиваем главную кнопку Telegram
-        tg.MainButton.setText('Закрыть форму')
-                   .show()
-                   .onClick(() => tg.close());
+        let endpointCounter = 0;
+        const endpointsData = {};
         
-        // Обработка формы
-        document.getElementById('dbForm').addEventListener('submit', function(e) {
-            e.preventDefault();
+        // Добавляем первый эндпойнт по умолчанию
+        addEndpoint();
+        
+        function addEndpoint() {
+            endpointCounter++;
+            const container = document.getElementById('endpoints-container');
             
-            // Собираем данные
+            const endpointCard = document.createElement('div');
+            endpointCard.className = 'endpoint-card';
+            endpointCard.id = `endpoint-${endpointCounter}`;
+            
+            endpointCard.innerHTML = `
+                <div class="endpoint-header">
+                    <span class="endpoint-number">Эндпойнт #${endpointCounter}</span>
+                    ${endpointCounter > 1 ? 
+                        `<button type="button" class="btn btn-remove" onclick="removeEndpoint(${endpointCounter})">✕</button>` 
+                        : ''}
+                </div>
+                
+                <div class="form-group">
+                    <label>Название адреса (path)</label>
+                    <input type="text" 
+                           class="endpoint-path" 
+                           placeholder="/api/users" 
+                           data-endpoint="${endpointCounter}"
+                           required>
+                </div>
+                
+                <div class="row">
+                    <div class="form-group">
+                        <label>Тип запроса</label>
+                        <select class="endpoint-type" data-endpoint="${endpointCounter}">
+                            <option value="SELECT">SELECT</option>
+                            <option value="INSERT">INSERT</option>
+                            <option value="UPDATE">UPDATE</option>
+                            <option value="DELETE">DELETE</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Название таблицы</label>
+                        <input type="text" 
+                               class="endpoint-table" 
+                               placeholder="users" 
+                               data-endpoint="${endpointCounter}"
+                               required>
+                    </div>
+                </div>
+            `;
+            
+            container.appendChild(endpointCard);
+        }
+        
+        function removeEndpoint(id) {
+            const card = document.getElementById(`endpoint-${id}`);
+            if (card) {
+                card.remove();
+                updateEndpointNumbers();
+            }
+        }
+        
+        function updateEndpointNumbers() {
+            const cards = document.querySelectorAll('.endpoint-card');
+            cards.forEach((card, index) => {
+                card.querySelector('.endpoint-number').textContent = `Эндпойнт #${index + 1}`;
+                
+                // Обновляем data-endpoint
+                const inputs = card.querySelectorAll('[data-endpoint]');
+                inputs.forEach(input => {
+                    input.dataset.endpoint = index + 1;
+                });
+                
+                // Показываем кнопку удаления только если больше одного
+                const removeBtn = card.querySelector('.btn-remove');
+                if (cards.length > 1) {
+                    if (!removeBtn) {
+                        const header = card.querySelector('.endpoint-header');
+                        const btn = document.createElement('button');
+                        btn.type = 'button';
+                        btn.className = 'btn btn-remove';
+                        btn.textContent = '✕';
+                        btn.onclick = () => removeEndpoint(index + 1);
+                        header.appendChild(btn);
+                    }
+                }
+            });
+            endpointCounter = cards.length;
+        }
+        
+        function collectEndpoints() {
+            const endpoints = {};
+            const paths = document.querySelectorAll('.endpoint-path');
+            const types = document.querySelectorAll('.endpoint-type');
+            const tables = document.querySelectorAll('.endpoint-table');
+            
+            for (let i = 0; i < paths.length; i++) {
+                const path = paths[i].value.trim();
+                const type = types[i].value;
+                const table = tables[i].value.trim();
+                
+                if (path && table) {
+                    endpoints[path] = {
+                        type: type,
+                        table: table
+                    };
+                }
+            }
+            
+            return endpoints;
+        }
+        
+        function submitForm() {
+            // Собираем все данные
             const formData = {
-                dbType: document.getElementById('dbType').value,
                 host: document.getElementById('host').value,
-                port: document.getElementById('port').value,
+                sshPort: document.getElementById('sshPort').value,
+                dbType: document.getElementById('dbType').value,
                 dbName: document.getElementById('dbName').value,
-                checkType: document.getElementById('checkType').value
+                sshUser: document.getElementById('sshUser').value,
+                sshPassword: document.getElementById('sshPassword').value,
+                endpoints: collectEndpoints()
             };
+            
+            // Проверка обязательных полей
+            if (!formData.host || !formData.dbName || !formData.sshUser || !formData.sshPassword) {
+                tg.showPopup({
+                    title: '⚠️ Ошибка',
+                    message: 'Заполните все обязательные поля в секции подключения.',
+                    buttons: [{type: 'ok'}]
+                });
+                return;
+            }
+            
+            if (Object.keys(formData.endpoints).length === 0) {
+                tg.showPopup({
+                    title: '⚠️ Ошибка',
+                    message: 'Добавьте хотя бы один эндпойнт.',
+                    buttons: [{type: 'ok'}]
+                });
+                return;
+            }
             
             // Отправляем данные боту
             tg.sendData(JSON.stringify(formData));
             
-            // Показываем уведомление
+            // Показываем успех
             tg.showPopup({
-                title: '✅ Готово!',
-                message: 'Данные отправлены боту. Ожидайте результаты проверки.',
-                buttons: [{type: 'ok'}]
+                title: '✅ Агент создан',
+                message: 'Данные отправлены боту. Агент будет настроен в ближайшее время.',
+                buttons: [{
+                    type: 'ok',
+                    text: 'Закрыть'
+                }]
             });
-        });
+        }
+        
+        // Настройка главной кнопки
+        tg.MainButton.setText('Закрыть')
+                   .show()
+                   .onClick(() => tg.close());
     </script>
 </body>
 </html>
