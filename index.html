@@ -1,5 +1,145 @@
-<html>
-  <body>
-    hello man
-  </body>
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SecureSQL - Проверка БД</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            padding: 15px;
+            background: var(--tg-theme-bg-color, #fff);
+            color: var(--tg-theme-text-color, #000);
+        }
+        
+        h2 { margin-bottom: 20px; font-size: 20px; }
+        
+        .form-group { margin-bottom: 15px; }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+            font-size: 14px;
+            color: var(--tg-theme-hint-color, #666);
+        }
+        
+        input, select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            font-size: 16px;
+            background: var(--tg-theme-secondary-bg-color, #f0f0f0);
+            color: var(--tg-theme-text-color, #000);
+        }
+        
+        button {
+            width: 100%;
+            padding: 14px;
+            background: var(--tg-theme-button-color, #2481cc);
+            color: var(--tg-theme-button-text-color, #fff);
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        
+        button:active { opacity: 0.8; }
+        
+        .note {
+            margin-top: 15px;
+            font-size: 12px;
+            color: var(--tg-theme-hint-color, #999);
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <h2>🔍 Проверка базы данных</h2>
+    
+    <form id="dbForm">
+        <div class="form-group">
+            <label>Тип базы данных</label>
+            <select id="dbType" required>
+                <option value="">Выберите тип...</option>
+                <option value="mysql">MySQL</option>
+                <option value="postgresql">PostgreSQL</option>
+                <option value="mssql">MS SQL Server</option>
+                <option value="oracle">Oracle</option>
+            </select>
+        </div>
+        
+        <div class="form-group">
+            <label>Хост / IP-адрес</label>
+            <input type="text" id="host" placeholder="192.168.1.100" required>
+        </div>
+        
+        <div class="form-group">
+            <label>Порт</label>
+            <input type="number" id="port" placeholder="3306" value="3306">
+        </div>
+        
+        <div class="form-group">
+            <label>Название БД</label>
+            <input type="text" id="dbName" placeholder="my_database" required>
+        </div>
+        
+        <div class="form-group">
+            <label>Тип проверки</label>
+            <select id="checkType">
+                <option value="full">Полная проверка</option>
+                <option value="access">Права доступа</option>
+                <option value="encryption">Шифрование</option>
+                <option value="vulnerabilities">Уязвимости</option>
+            </select>
+        </div>
+        
+        <button type="submit">🚀 Запустить проверку</button>
+    </form>
+    
+    <p class="note">Данные будут отправлены боту SecureSQL</p>
+
+    <script>
+        const tg = window.Telegram.WebApp;
+        
+        // Инициализация
+        tg.ready();
+        tg.expand();
+        
+        // Настраиваем главную кнопку Telegram
+        tg.MainButton.setText('Закрыть форму')
+                   .show()
+                   .onClick(() => tg.close());
+        
+        // Обработка формы
+        document.getElementById('dbForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            // Собираем данные
+            const formData = {
+                dbType: document.getElementById('dbType').value,
+                host: document.getElementById('host').value,
+                port: document.getElementById('port').value,
+                dbName: document.getElementById('dbName').value,
+                checkType: document.getElementById('checkType').value
+            };
+            
+            // Отправляем данные боту
+            tg.sendData(JSON.stringify(formData));
+            
+            // Показываем уведомление
+            tg.showPopup({
+                title: '✅ Готово!',
+                message: 'Данные отправлены боту. Ожидайте результаты проверки.',
+                buttons: [{type: 'ok'}]
+            });
+        });
+    </script>
+</body>
 </html>
