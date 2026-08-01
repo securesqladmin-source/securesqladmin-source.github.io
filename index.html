@@ -314,47 +314,9 @@
         
         function submitForm() {
             // Собираем все данные
-            const formData = {
-                host: document.getElementById('host').value,
-                sshPort: document.getElementById('sshPort').value,
-                dbType: document.getElementById('dbType').value,
-                dbName: document.getElementById('dbName').value,
-                sshUser: document.getElementById('sshUser').value,
-                sshPassword: document.getElementById('sshPassword').value,
-                endpoints: collectEndpoints()
-            };
-            
-            // Проверка обязательных полей
-            if (!formData.host || !formData.dbName || !formData.sshUser || !formData.sshPassword) {
-                tg.showPopup({
-                    title: '⚠️ Ошибка',
-                    message: 'Заполните все обязательные поля в секции подключения.',
-                    buttons: [{type: 'ok'}]
-                });
-                return;
-            }
-            
-            if (Object.keys(formData.endpoints).length === 0) {
-                tg.showPopup({
-                    title: '⚠️ Ошибка',
-                    message: 'Добавьте хотя бы один эндпойнт.',
-                    buttons: [{type: 'ok'}]
-                });
-                return;
-            }
-            
-            // Отправляем данные боту
-            tg.sendData(JSON.stringify(formData));
-            
-            // Показываем успех
-            tg.showPopup({
-                title: '✅ Агент создан',
-                message: 'Данные отправлены боту. Агент будет настроен в ближайшее время.',
-                buttons: [{
-                    type: 'ok',
-                    text: 'Закрыть'
-                }]
-            });
+            alert('Кнопка нажата!');
+    
+            tg.sendData(JSON.stringify({test: "hello"}));
         }
         
         // Настройка главной кнопки
