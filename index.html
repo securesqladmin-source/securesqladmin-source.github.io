@@ -150,12 +150,17 @@
                 <input type="number" id="sshPort" placeholder="22" value="22">
             </div>
             <div class="form-group">
-                <label>Тип БД</label>
-                <select id="dbType">
-                    <option value="mysql">MySQL</option>
-                    <option value="postgresql">PostgreSQL</option>
-                </select>
+                <label>Порт БД</label>
+                <input type="number" id="dbPort" placeholder="3306" value="3306">
             </div>
+        </div>
+        
+        <div class="form-group">
+            <label>Тип БД</label>
+            <select id="dbType">
+                <option value="mysql">MySQL</option>
+                <option value="postgresql">PostgreSQL</option>
+            </select>
         </div>
         
         <div class="form-group">
@@ -171,6 +176,44 @@
             <div class="form-group">
                 <label>Пароль SSH</label>
                 <input type="password" id="sshPassword" placeholder="••••••••" required>
+            </div>
+        </div>
+        
+        <div class="row">
+            <div class="form-group">
+                <label>Имя пользователя БД</label>
+                <input type="text" id="dbUser" placeholder="db_user" required>
+            </div>
+            <div class="form-group">
+                <label>Пароль БД</label>
+                <input type="password" id="dbPassword" placeholder="••••••••" required>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Секция настройки агента -->
+    <div class="section">
+        <div class="section-title">⚙️ Настройки агента</div>
+        
+        <div class="row">
+            <div class="form-group">
+                <label>Порт агента</label>
+                <input type="number" id="agentPort" placeholder="8080" value="8080">
+            </div>
+            <div class="form-group">
+                <label>Путь к агенту (директория)</label>
+                <input type="text" id="agentPath" placeholder="/opt/secure-sql-agent" required>
+            </div>
+        </div>
+        
+        <div class="row">
+            <div class="form-group">
+                <label>Total Rate Limit (запросов/сек)</label>
+                <input type="number" id="totalRateLimit" placeholder="100" value="100" min="1">
+            </div>
+            <div class="form-group">
+                <label>Rate to One (запросов/сек на IP)</label>
+                <input type="number" id="rateToOne" placeholder="10" value="10" min="1">
             </div>
         </div>
     </div>
@@ -204,6 +247,16 @@
         
         // Добавляем первый эндпойнт по умолчанию
         addEndpoint();
+        
+        // Автоматически меняем порт БД при смене типа БД
+        document.getElementById('dbType').addEventListener('change', function(e) {
+            const dbPort = document.getElementById('dbPort');
+            if (e.target.value === 'mysql') {
+                dbPort.value = '3306';
+            } else if (e.target.value === 'postgresql') {
+                dbPort.value = '5432';
+            }
+        });
         
         function addEndpoint() {
             endpointCounter++;
@@ -315,20 +368,33 @@
         function submitForm() {
             // Собираем все данные
             const formData = {
+                // Данные подключения
                 host: document.getElementById('host').value,
                 sshPort: document.getElementById('sshPort').value,
+                dbPort: document.getElementById('dbPort').value,
                 dbType: document.getElementById('dbType').value,
                 dbName: document.getElementById('dbName').value,
                 sshUser: document.getElementById('sshUser').value,
                 sshPassword: document.getElementById('sshPassword').value,
+                dbUser: document.getElementById('dbUser').value,
+                dbPassword: document.getElementById('dbPassword').value,
+                
+                // Настройки агента
+                agentPort: document.getElementById('agentPort').value,
+                agentPath: document.getElementById('agentPath').value,
+                totalRateLimit: document.getElementById('totalRateLimit').value,
+                rateToOne: document.getElementById('rateToOne').value,
+                
+                // Эндпойнты
                 endpoints: collectEndpoints()
             };
             
-            // Проверка обязательных полей
-            if (!formData.host || !formData.dbName || !formData.sshUser || !formData.sshPassword) {
+            // Проверка обязательных полей подключения
+            if (!formData.host || !formData.dbName || !formData.sshUser || !formData.sshPassword || 
+                !formData.dbUser || !formData.dbPassword || !formData.agentPath) {
                 tg.showPopup({
                     title: '⚠️ Ошибка',
-                    message: 'Заполните все обязательные поля в секции подключения.',
+                    message: 'Заполните все обязательные поля.',
                     buttons: [{type: 'ok'}]
                 });
                 return;
@@ -343,8 +409,17 @@
                 return;
             }
             
+            // Проверка rate limit значений
+            if (parseInt(formData.totalRateLimit) < 1 || parseInt(formData.rateToOne) < 1) {
+                tg.showPopup({
+                    title: '⚠️ Ошибка',
+                    message: 'Rate limit значения должны быть больше 0.',
+                    buttons: [{type: 'ok'}]
+                });
+                return;
+            }
+            
             // Отправляем данные боту
-            alert(JSON.stringify(formData));
             tg.sendData(JSON.stringify(formData));
             
             // Показываем успех
