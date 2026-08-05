@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SecureSQL - Настройка агента</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            padding: 15px;
+            background: var(--tg-theme-bg-color, #fff);
+            color: var(--tg-theme-text-color, #000);
+        }
+        
+        h2 { 
+            margin-bottom: 8px; 
+            font-size: 18px; 
+            color: var(--tg-theme-text-color, #000);
+        }
+        
+        .section {
+            margin-bottom: 25px;
+            padding: 15px;
+            border-radius: 12px;
+            background: var(--tg-theme-secondary-bg-color, #f5f5f5);
+        }
+        
+        .section-title {
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 15px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        .form-group { margin-bottom: 12px; }
+        
+        label {
+            display: block;
+            margin-bottom: 4px;
+            font-weight: 500;
+            font-size: 13px;
+            color: var(--tg-theme-hint-color, #666);
+        }
+        
+        input, select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 15px;
+            background: var(--tg-theme-bg-color, #fff);
+            color: var(--tg-theme-text-color, #000);
+        }
+        
+        .row {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .row > * { flex: 1; }
+        
+        .endpoint-card {
+            background: var(--tg-theme-bg-color, #fff);
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            border: 1px solid #ddd;
+        }
+        
+        .endpoint-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .endpoint-number {
+            font-weight: bold;
+            font-size: 14px;
+        }
+        
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        
+        .btn-add {
+            width: 100%;
+            padding: 12px;
+            background: var(--tg-theme-button-color, #2481cc);
+            color: var(--tg-theme-button-text-color, #fff);
+            margin-top: 5px;
+            font-size: 14px;
+        }
+        
+        .btn-remove {
+            background: #ff4444;
+            color: white;
+            padding: 4px 10px;
+            font-size: 12px;
+        }
+        
+        .btn-submit {
+            width: 100%;
+            padding: 14px;
+            background: #28a745;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 15px;
+        }
+        
+        .btn:active { opacity: 0.8; }
+        .btn-submit:active { opacity: 0.8; }
+        
+        .note {
+            margin-top: 10px;
+            font-size: 12px;
+            color: var(--tg-theme-hint-color, #999);
+            text-align: center;
+        }
+
+        .description {
+            font-size: 13px;
+            color: var(--tg-theme-hint-color, #666);
+            margin-bottom: 15px;
+            line-height: 1.4;
+        }
+    </style>
+</head>
+<body>
+    <h2>⚙️ Настройка агента SecureSQL</h2>
+    
+    <!-- Секция настроек агента -->
+    <div class="section">
+        <div class="section-title">🔧 Основные параметры</div>
+        
+        <div class="form-group">
+            <label>Порт агента</label>
+            <input type="number" id="agentPort" placeholder="8080" value="8080" min="1" max="65535">
+        </div>
+        
+        <div class="row">
+            <div class="form-group">
+                <label>Total Rate Limit (всего запросов/сек)</label>
+                <input type="number" id="totalRateLimit" placeholder="100" value="100" min="1">
+            </div>
+            <div class="form-group">
+                <label>Rate to One (запросов/сек на IP)</label>
+                <input type="number" id="rateToOne" placeholder="10" value="10" min="1">
+            </div>
+        </div>
+        
+        <div class="description">
+            💡 <strong>Total Rate Limit</strong> - максимальное общее количество запросов в секунду.<br>
+            💡 <strong>Rate to One</strong> - максимальное количество запросов в секунду с одного IP-адреса.
+        </div>
+    </div>
+    
+    <!-- Секция настройки эндпойнтов -->
+    <div class="section">
+        <div class="section-title">🔗 Настройка эндпойнтов</div>
+        
+        <div class="description">
+            Настройте API-эндпойнты для доступа к вашей базе данных. Каждый эндпойнт соответствует определенной таблице и типу SQL-запроса.
+        </div>
+        
+        <div id="endpoints-container">
+            <!-- Эндпойнты будут добавляться здесь -->
+        </div>
+        
+        <button type="button" class="btn btn-add" onclick="addEndpoint()">
+            ➕ Добавить эндпойнт
+        </button>
+    </div>
+    
+    <button type="button" class="btn-submit" onclick="submitForm()">
+        💾 Сохранить настройки
+    </button>
+    
+    <p class="note">Данные будут отправлены боту SecureSQL</p>
+
+    <script>
+        const tg = window.Telegram.WebApp;
+        tg.ready();
+        tg.expand();
+        
+        let endpointCounter = 0;
+        
+        // Добавляем первый эндпойнт по умолчанию
+        addEndpoint();
+        
+        function addEndpoint() {
+            endpointCounter++;
+            const container = document.getElementById('endpoints-container');
+            
+            const endpointCard = document.createElement('div');
+            endpointCard.className = 'endpoint-card';
+            endpointCard.id = `endpoint-${endpointCounter}`;
+            
+            endpointCard.innerHTML = `
+                <div class="endpoint-header">
+                    <span class="endpoint-number">Эндпойнт #${endpointCounter}</span>
+                    ${endpointCounter > 1 ? 
+                        `<button type="button" class="btn btn-remove" onclick="removeEndpoint(${endpointCounter})">✕</button>` 
+                        : ''}
+                </div>
+                
+                <div class="form-group">
+                    <label>Путь (path)</label>
+                    <input type="text" 
+                           class="endpoint-path" 
+                           placeholder="/api/users" 
+                           data-endpoint="${endpointCounter}"
+                           required>
+                </div>
+                
+                <div class="row">
+                    <div class="form-group">
+                        <label>Тип запроса</label>
+                        <select class="endpoint-type" data-endpoint="${endpointCounter}">
+                            <option value="SELECT">SELECT</option>
+                            <option value="INSERT">INSERT</option>
+                            <option value="UPDATE">UPDATE</option>
+                            <option value="DELETE">DELETE</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Название таблицы</label>
+                        <input type="text" 
+                               class="endpoint-table" 
+                               placeholder="users" 
+                               data-endpoint="${endpointCounter}"
+                               required>
+                    </div>
+                </div>
+            `;
+            
+            container.appendChild(endpointCard);
+        }
+        
+        function removeEndpoint(id) {
+            const card = document.getElementById(`endpoint-${id}`);
+            if (card) {
+                card.remove();
+                updateEndpointNumbers();
+            }
+        }
+        
+        function updateEndpointNumbers() {
+            const cards = document.querySelectorAll('.endpoint-card');
+            cards.forEach((card, index) => {
+                card.querySelector('.endpoint-number').textContent = `Эндпойнт #${index + 1}`;
+                
+                // Обновляем data-endpoint
+                const inputs = card.querySelectorAll('[data-endpoint]');
+                inputs.forEach(input => {
+                    input.dataset.endpoint = index + 1;
+                });
+                
+                // Показываем кнопку удаления только если больше одного
+                const removeBtn = card.querySelector('.btn-remove');
+                if (cards.length > 1) {
+                    if (!removeBtn) {
+                        const header = card.querySelector('.endpoint-header');
+                        const btn = document.createElement('button');
+                        btn.type = 'button';
+                        btn.className = 'btn btn-remove';
+                        btn.textContent = '✕';
+                        btn.onclick = () => removeEndpoint(index + 1);
+                        header.appendChild(btn);
+                    }
+                }
+            });
+            endpointCounter = cards.length;
+        }
+        
+        function collectEndpoints() {
+            const endpoints = {};
+            const paths = document.querySelectorAll('.endpoint-path');
+            const types = document.querySelectorAll('.endpoint-type');
+            const tables = document.querySelectorAll('.endpoint-table');
+            
+            for (let i = 0; i < paths.length; i++) {
+                const path = paths[i].value.trim();
+                const type = types[i].value;
+                const table = tables[i].value.trim();
+                
+                if (path && table) {
+                    endpoints[path] = {
+                        type: type,
+                        table: table
+                    };
+                }
+            }
+            
+            return endpoints;
+        }
+        
+        function submitForm() {
+            // Получаем значения
+            const agentPort = document.getElementById('agentPort').value;
+            const totalRateLimit = document.getElementById('totalRateLimit').value;
+            const rateToOne = document.getElementById('rateToOne').value;
+            const endpoints = collectEndpoints();
+            
+            // Валидация порта
+            if (!agentPort || agentPort < 1 || agentPort > 65535) {
+                tg.showPopup({
+                    title: '⚠️ Ошибка',
+                    message: 'Укажите корректный порт агента (1-65535).',
+                    buttons: [{type: 'ok'}]
+                });
+                return;
+            }
+            
+            // Валидация rate limit'ов
+            if (!totalRateLimit || totalRateLimit < 1) {
+                tg.showPopup({
+                    title: '⚠️ Ошибка',
+                    message: 'Total Rate Limit должен быть больше 0.',
+                    buttons: [{type: 'ok'}]
+                });
+                return;
+            }
+            
+            if (!rateToOne || rateToOne < 1) {
+                tg.showPopup({
+                    title: '⚠️ Ошибка',
+                    message: 'Rate to One должен быть больше 0.',
+                    buttons: [{type: 'ok'}]
+                });
+                return;
+            }
+            
+            // Проверка, что rateToOne не превышает totalRateLimit
+            if (parseInt(rateToOne) > parseInt(totalRateLimit)) {
+                tg.showPopup({
+                    title: '⚠️ Ошибка',
+                    message: 'Rate to One не может превышать Total Rate Limit.',
+                    buttons: [{type: 'ok'}]
+                });
+                return;
+            }
+            
+            // Валидация эндпойнтов
+            if (Object.keys(endpoints).length === 0) {
+                tg.showPopup({
+                    title: '⚠️ Ошибка',
+                    message: 'Добавьте хотя бы один эндпойнт.',
+                    buttons: [{type: 'ok'}]
+                });
+                return;
+            }
+            
+            // Проверка на дубликаты путей
+            const paths = Object.keys(endpoints);
+            const uniquePaths = new Set(paths);
+            if (paths.length !== uniquePaths.size) {
+                tg.showPopup({
+                    title: '⚠️ Ошибка',
+                    message: 'Обнаружены дублирующиеся пути эндпойнтов. Пожалуйста, используйте уникальные пути.',
+                    buttons: [{type: 'ok'}]
+                });
+                return;
+            }
+            
+            // Формируем JSON
+            const formData = {
+                agentPort: parseInt(agentPort),
+                totalRateLimit: parseInt(totalRateLimit),
+                rateToOne: parseInt(rateToOne),
+                endpoints: endpoints
+            };
+            
+            // Отправляем данные боту
+            tg.sendData(JSON.stringify(formData));
+            
+            // Показываем успех
+            tg.showPopup({
+                title: '✅ Настройки сохранены',
+                message: `Настроено ${paths.length} эндпойнтов. Данные отправлены боту.`,
+                buttons: [{
+                    type: 'ok',
+                    text: 'Закрыть'
+                }]
+            });
+        }
+        
+        // Настройка главной кнопки
+        tg.MainButton.setText('Закрыть')
+                   .show()
+                   .onClick(() => tg.close());
+    </script>
+</body>
+</html>
